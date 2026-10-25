@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ダメージ比較シミュレーター ver.0.3</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="wrap">
+<header><div><p class="eyebrow">DAMAGE LAB / ver.0.3</p><h1>ダメージ比較シミュレーター</h1><p>登録ステータスを基準に、ステータス変更と魔法付与・刻印オプション変更を比較します。</p></div><button type="button" class="ghost" id="reset">ステータスリセット</button></header>
+<nav class="mode-tabs" aria-label="比較モード"><button type="button" id="modeStats" class="mode active" aria-pressed="true">ステータス比較モード</button><button type="button" id="modeOptions" class="mode" aria-pressed="false">魔法付与・刻印オプション比較モード</button></nav><p id="modeHelp" class="mode-help"></p>
+<section class="results" aria-live="polite"><div class="metric"><span>変更前の推定ダメージ</span><strong id="beforeDamage">—</strong></div><div class="metric"><span>変更後の推定ダメージ</span><strong id="afterDamage">—</strong></div><div class="metric highlight"><span>火力変化率</span><strong id="changeRate">—</strong><small id="changeAbsolute"></small></div></section>
+<div class="toolbar"><button type="button" id="commit">変更後を確定（基準を上書き）</button><button type="button" class="ghost" id="undo">一つ戻る</button><button type="button" class="ghost" id="restore">変更後の入力をリセット</button></div>
+<div class="columns"><section class="panel"><div class="sectionhead"><h2><span id="beforeHeading">変更前のステータス</span></h2><span id="beforeHint">編集不可</span></div><div id="beforeFields"></div></section><section class="panel"><div class="sectionhead"><h2><span id="afterHeading">変更後のステータス</span></h2><span id="afterHint"></span></div><div id="afterFields"></div></section></div>
+
+<footer>入力データはこのブラウザー内に自動保存されます。</footer>
+</main>
+<div class="overlay" id="setupOverlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle" hidden><section class="setup panel"><p class="eyebrow">FIRST SETUP</p><h2 id="setupTitle">初期ステータス登録</h2><p>現在のステータスを入力してください。登録後、変更前の欄は固定されます。</p><form id="setupForm"><div id="setupFields"></div><button type="submit" class="wide">このステータスで開始</button></form></section></div>
+<script src="script.js"></script></body></html>
