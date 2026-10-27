@@ -1,7 +1,29 @@
 'use strict';
-// ver.0.3: ボス・デバフは後のバージョンで calculateDamage の enemy を拡張する。
+// ver.0.4: ボス・デバフは後のバージョンで calculateDamage の enemy を拡張する。
 const STORAGE_KEY='damageLab_v0_2';
+const LANG_KEY='damageLab_language';
+let language=localStorage.getItem(LANG_KEY)==='en'?'en':'ja';
 const OLD_KEY='damageLab_v0_1';
+
+const I18N={
+ ja:{title:'ダメージ比較シミュレーター',description:'登録ステータスを基準に、ステータス変更と魔法付与・刻印オプション変更を比較します。',reset:'ステータスリセット',statsMode:'ステータス比較モード',optionsMode:'魔法付与・刻印オプション比較モード',beforeDamage:'変更前の推定ダメージ',afterDamage:'変更後の推定ダメージ',changeRate:'火力変化率',undo:'一つ戻る',statsBeforeHeading:'変更前のステータス',statsAfterHeading:'変更後のステータス',optionsBeforeHeading:'現在の魔法付与・刻印オプション',optionsAfterHeading:'新しい魔法付与・刻印オプション',readOnly:'編集不可',newOptions:'新しいオプションを入力',modeHelp:'変更前のステータスは固定です。変更後だけを編集し、確定すると新しい基準になります。',commitStats:'変更後を確定（基準を上書き）',commitOptions:'新しいオプションを確定（基準を更新）',restoreStats:'変更後の入力をリセット',restoreOptions:'新しいオプションを元に戻す',footer:'入力データはこのブラウザー内に自動保存されます。',setupTitle:'初期ステータス登録',setupDescription:'現在のステータスを入力してください。登録後、変更前の欄は固定されます。',setupStart:'このステータスで開始',notComparable:'比較不可',difference:'差分：',damageUnit:'ダメージ',resetConfirm:'初期ステータス設定画面に戻ります。現在の登録内容を変更しますか？',fields:['クリティカルダメージ (%)','基礎攻撃力','装備攻撃力','攻撃力増加率 (%)','属性攻撃力','属性攻撃力増加率 (%)','属性ダメージ増加率 (%)','スキルダメージ増加率 (%)','スキル倍率 (%)','防御無視 (%)']},
+ en:{title:'Damage Comparison Simulator',description:'Compare damage changes from character stats and enchantment / engraving options against your saved baseline.',reset:'Reset Base Stats',statsMode:'Stat Comparison',optionsMode:'Enchantment / Engraving Options',beforeDamage:'Estimated Damage Before',afterDamage:'Estimated Damage After',changeRate:'Damage Change',undo:'Undo Last Commit',statsBeforeHeading:'Current Stats',statsAfterHeading:'New Stats',optionsBeforeHeading:'Current Enchantment / Engraving Options',optionsAfterHeading:'New Enchantment / Engraving Options',readOnly:'Read-only',newOptions:'Enter new options',modeHelp:'Current stats are locked. Edit the new stats, then commit to make them your new baseline.',commitStats:'Commit New Stats',commitOptions:'Commit New Options',restoreStats:'Reset New Stats',restoreOptions:'Reset New Options',footer:'Your data is automatically saved in this browser.',setupTitle:'Set Up Base Stats',setupDescription:'Enter your current stats. They will be locked as your baseline after setup.',setupStart:'Start with These Stats',notComparable:'Cannot compare',difference:'Difference: ',damageUnit:'damage',resetConfirm:'Return to initial stat setup and edit your saved baseline?',fields:['Critical Damage (%)','Base Attack','Equipment Attack','Attack Bonus (%)','Elemental Attack','Elemental Attack Bonus (%)','Elemental Damage Bonus (%)','Skill Damage Bonus (%)','Skill Multiplier (%)','Defense Ignore (%)']}
+};
+function tr(key){return I18N[language][key]||key;}
+function fieldLabel(field){return I18N[language].fields[FIELDS.findIndex(f=>f.key===field.key)];}
+function translateStatic(){
+ document.documentElement.lang=language;
+ document.title=`${tr('title')} ver.0.4`;
+ const set=(selector,value)=>{const node=document.querySelector(selector);if(node)node.textContent=value;};
+ set('header h1',tr('title'));set('header div > p:not(.eyebrow)',tr('description'));
+ set('#reset',tr('reset'));set('#modeStats',tr('statsMode'));set('#modeOptions',tr('optionsMode'));
+ set('.results .metric:nth-child(1) span',tr('beforeDamage'));set('.results .metric:nth-child(2) span',tr('afterDamage'));set('.results .metric:nth-child(3) span',tr('changeRate'));
+ set('#undo',tr('undo'));set('footer',tr('footer'));set('#setupTitle',tr('setupTitle'));
+ set('#setupOverlay .setup > p:not(.eyebrow)',tr('setupDescription'));
+ set('#setupForm button[type="submit"]',tr('setupStart'));
+ set('#langToggle',language==='ja'?'English':'日本語');
+}
+
 const FIELDS=[
   {key:'critDamage',label:'クリティカルダメージ (%)',initial:50},
   {key:'baseAttack',label:'基礎攻撃力',initial:24057},
@@ -20,7 +42,7 @@ const OPTION_FIELDS=FIELDS.filter(f=>!['baseAttack','skillMultiplier'].includes(
 const el=id=>document.getElementById(id);
 const clone=o=>({...o});
 const frac=x=>x/100;
-const fmt=n=>Math.round(n).toLocaleString('ja-JP');
+const fmt=n=>Math.round(n).toLocaleString(language==='en'?'en-US':'ja-JP');
 const defaultStats=()=>Object.fromEntries(FIELDS.map(f=>[f.key,f.initial]));
 const emptyOptions=()=>Object.fromEntries(OPTION_FIELDS.map(f=>[f.key,0]));
 function normalize(s,fields,defaults){const out={...defaults};for(const f of fields){const n=Number(s?.[f.key]);if(s?.[f.key]!==undefined&&Number.isFinite(n))out[f.key]=n;}return out;}
@@ -59,7 +81,7 @@ function adjustedStats(base,oldOpts,newOpts){
   return out;
 }
 function fieldHtml(group,f,value,disabled=false){
-  return `<div class="field" id="field-${group}-${f.key}"><label for="${group}-${f.key}">${f.label}</label><input id="${group}-${f.key}" type="number" step="any" inputmode="decimal" value="${value}" data-group="${group}" data-key="${f.key}" ${disabled?'disabled':''} required></div>`;
+  return `<div class="field" id="field-${group}-${f.key}"><label for="${group}-${f.key}">${fieldLabel(f)}</label><input id="${group}-${f.key}" type="number" step="any" inputmode="decimal" value="${value}" data-group="${group}" data-key="${f.key}" ${disabled?'disabled':''} required></div>`;
 }
 function renderGroup(group,stats,fields,disabled=false){el(group+'Fields').innerHTML=fields.map(f=>fieldHtml(group,f,stats[f.key],disabled)).join('');}
 function activeValues(){
@@ -67,6 +89,7 @@ function activeValues(){
   return{before:state.before,after:adjustedStats(state.before,state.optionsBefore,state.optionsAfter)};
 }
 function renderAll(){
+  translateStatic();
   const options=state.mode==='options';
   renderGroup('before',options?state.optionsBefore:state.before,options?OPTION_FIELDS:FIELDS,!options);
   renderGroup('after',options?state.optionsAfter:state.after,options?OPTION_FIELDS:FIELDS);
@@ -76,15 +99,13 @@ function renderAll(){
   el('modeOptions').classList.toggle('active',options);
   el('modeStats').setAttribute('aria-pressed',String(!options));
   el('modeOptions').setAttribute('aria-pressed',String(options));
-  el('beforeHeading').textContent=options?'現在の魔法付与・刻印オプション':'変更前のステータス';
-  el('afterHeading').textContent=options?'新しい魔法付与・刻印オプション':'変更後のステータス';
-  el('beforeHint').textContent=options?'':'編集不可';
-  el('afterHint').textContent=options?'新しいオプションを入力':'';
-  el('modeHelp').textContent=options
-    ?''
-    :'変更前のステータスは固定です。変更後だけを編集し、確定すると新しい基準になります。';
-  el('commit').textContent=options?'新しいオプションを確定（基準を更新）':'変更後を確定（基準を上書き）';
-  el('restore').textContent=options?'新しいオプションを元に戻す':'変更後の入力をリセット';
+  el('beforeHeading').textContent=options?tr('optionsBeforeHeading'):tr('statsBeforeHeading');
+  el('afterHeading').textContent=options?tr('optionsAfterHeading'):tr('statsAfterHeading');
+  el('beforeHint').textContent=options?'':tr('readOnly');
+  el('afterHint').textContent=options?tr('newOptions'):'';
+  el('modeHelp').textContent=options?'':tr('modeHelp');
+  el('commit').textContent=options?tr('commitOptions'):tr('commitStats');
+  el('restore').textContent=options?tr('restoreOptions'):tr('restoreStats');
   update();
 }
 function update(){
@@ -93,9 +114,9 @@ function update(){
   const change=a>0?(b/a-1)*100:null;
   el('beforeDamage').textContent=fmt(a);
   el('afterDamage').textContent=fmt(b);
-  el('changeRate').textContent=change===null?'比較不可':`${change>=0?'+':''}${change.toFixed(2)}%`;
+  el('changeRate').textContent=change===null?tr('notComparable'):`${change>=0?'+':''}${change.toFixed(2)}%`;
   el('changeRate').className=change===null?'':change>=0?'positive':'negative';
-  el('changeAbsolute').textContent=`差分：${b-a>=0?'+':''}${fmt(b-a)} ダメージ`;
+  el('changeAbsolute').textContent=`${tr('difference')}${b-a>=0?'+':''}${fmt(b-a)} ${tr('damageUnit')}`;
   el('undo').disabled=state.mode==='stats'?!state.undo:!state.optionsUndo;
   const opts=state.mode==='options';
   for(const f of (opts?OPTION_FIELDS:FIELDS)){
@@ -167,9 +188,11 @@ el('restore').addEventListener('click',()=>{
   renderAll();
 });
 el('reset').addEventListener('click',()=>{
-  if(!confirm('初期ステータス設定画面に戻ります。現在の登録内容を変更しますか？'))return;
+  if(!confirm(tr('resetConfirm')))return;
   state.registered=false;state.undo=null;state.optionsUndo=null;
   state.after=clone(state.before);state.optionsBefore=emptyOptions();state.optionsAfter=emptyOptions();
   renderAll();
 });
 renderAll();
+
+el('langToggle').addEventListener('click',()=>{language=language==='ja'?'en':'ja';localStorage.setItem(LANG_KEY,language);renderAll();});
