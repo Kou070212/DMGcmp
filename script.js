@@ -70,8 +70,11 @@ function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}cat
 function totalAttack(p){return(p.baseAttack+p.equipmentAttack)*(1+frac(p.attackBonus))+p.elementAttack*(1+frac(p.elementAttackBonus));}
 function calculateDamage(p,enemy={defRatio:0,elementResistance:0,ignoreResistance:0,critDefense:0}){
   const attack=Math.max(0,totalAttack(p));
-  const bonus=Math.max(0,1+frac(p.elementDamageBonus+p.skillDamageBonus)-(enemy.elementResistance||0));
-  const defense=Math.min(1,1/(1+Math.max(0,enemy.defRatio||0))+Math.max(0,frac(p.defenseIgnore)-(enemy.ignoreResistance||0)));
+  const bonus = Math.max(
+    0,
+    1 + frac(p.elementDamageBonus) - (enemy.elementResistance || 0)
+) * (1 + frac(p.skillDamageBonus));
+ const defense=Math.min(1,1/(1+Math.max(0,enemy.defRatio||0))+Math.max(0,frac(p.defenseIgnore)-(enemy.ignoreResistance||0)));
   const crit=1+Math.max(0,frac(p.critDamage)-(enemy.critDefense||0));
   return attack*Math.max(0,frac(p.skillMultiplier))*bonus*defense*crit;
 }
